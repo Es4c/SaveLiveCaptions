@@ -243,37 +243,41 @@ async def hook(filename, exit_event):
 
     finally:    
         # save the last sentences when exit
-        for sentence, _ in current_sentences.items():
-            if sentence not in seen_sentences:
-                print(f"[SAVE ON EXIT] {sentence}")
-                seen_sentences.add(sentence)
-                save.saved_captions.append((time.time(), sentence))
-                await save_txt(filename,save.saved_captions[-1])
-        
-        if last_full_text:
-            last_punct_match=None
-            for m in re.finditer(r'[，。！？.;!?]+', last_full_text):
-                last_two_punct_match =last_punct_match
-                last_punct_match = m
-            if last_punct_match:
-                trailing_text = last_full_text[last_punct_match.end():].strip()
-            else:
-                trailing_text = last_full_text.strip()
+        try:
+            for sentence, _ in current_sentences.items():
+                if sentence not in seen_sentences:
+                    print(f"[SAVE ON EXIT] {sentence}")
+                    seen_sentences.add(sentence)
+                    save.saved_captions.append((time.time(), sentence))
+                    await save_txt(filename,save.saved_captions[-1])
             
-            second_last_text = last_full_text[last_two_punct_match.end(): last_punct_match.start()+1].strip() if last_two_punct_match else ""
-            if second_last_text and second_last_text not in seen_sentences:
-                if not any(deduper.similarity_ratio(second_last_text, s) >= SIMILARITY for s in seen_sentences):
-                    print(f"[SAVE SECOND LAST ON EXIT] {second_last_text}")
-                    seen_sentences.add(second_last_text)
-                    save.saved_captions.append((time.time(), second_last_text))
-                    await save_txt(filename,save.saved_captions[-1])
+            if last_full_text:
+                last_punct_match=None
+                last_two_punct_match = None
+                for m in re.finditer(r'[，。！？.;!?]+', last_full_text):
+                    last_two_punct_match =last_punct_match
+                    last_punct_match = m
+                if last_punct_match:
+                    trailing_text = last_full_text[last_punct_match.end():].strip()
+                else:
+                    trailing_text = last_full_text.strip()
+                
+                second_last_text = last_full_text[last_two_punct_match.end(): last_punct_match.start()+1].strip() if last_two_punct_match else ""
+                if second_last_text and second_last_text not in seen_sentences:
+                    if not any(deduper.similarity_ratio(second_last_text, s) >= SIMILARITY for s in seen_sentences):
+                        print(f"[SAVE SECOND LAST ON EXIT] {second_last_text}")
+                        seen_sentences.add(second_last_text)
+                        save.saved_captions.append((time.time(), second_last_text))
+                        await save_txt(filename,save.saved_captions[-1])
 
-            if trailing_text and trailing_text not in seen_sentences:
-                if not any(deduper.similarity_ratio(trailing_text, s) >= SIMILARITY for s in seen_sentences):
-                    print(f"[SAVE TRAILING ON EXIT] {trailing_text}")
-                    seen_sentences.add(trailing_text)
-                    save.saved_captions.append((time.time(), trailing_text))
-                    await save_txt(filename,save.saved_captions[-1])
+                if trailing_text and trailing_text not in seen_sentences:
+                    if not any(deduper.similarity_ratio(trailing_text, s) >= SIMILARITY for s in seen_sentences):
+                        print(f"[SAVE TRAILING ON EXIT] {trailing_text}")
+                        seen_sentences.add(trailing_text)
+                        save.saved_captions.append((time.time(), trailing_text))
+                        await save_txt(filename,save.saved_captions[-1])
+        except Exception as e:
+            print(f"Error saving last sentences: {e}")
         
         await asyncio.to_thread(deduper.cleanup_file, filename)
         
