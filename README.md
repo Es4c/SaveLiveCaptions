@@ -1,54 +1,22 @@
-# Save Live Captions
+# 同上游区别（Difference from upstream)
+##如果你需要时间轴那么不要用这个分支，该分支不保存时间轴
 
-**Tired of losing live captions on Windows?**  This is a simple tool to save the content of live captions! The saved text document is like following:
-><img width="1187" height="477" alt="image" src="https://github.com/user-attachments/assets/78f3a0df-80f3-4e40-bc0e-9137910352c6" />
+原版还是有漏字和重复字幕的问题，所以自己改了一版自用。主要用来保存英语讲座的字幕然后给AI总结用的，所以不考虑时间轴问题。
 
-###  Features
+可能对字幕窗口有要求，最少要能显示两行，一行10个字。
 
----
-- ✨Save live captions to a text file.
-- 😃Minimalist floating dashboard.
-- **😎Customizable save options. (save location and quality option in `config.py`)**
+逻辑彻底修改：
+每次获取 Live Captions 窗口中的完整字幕文本。
 
-###  Installation
-### Option 1: Quick Start (Executable)
-You can download the latest version from the [Releases](../../releases) page.
+若当前文本的单词数 超过 15 个，则提取其 前 10 个单词 作为该段的“前缀指纹”。
 
-> [!IMPORTANT]
-> **Note on Antivirus Alerts:** If you encounter a malware warning for the `.exe` file, it is likely a **false positive** due to the lack of a digital signature. If you worry about this, try option 2 as follows. 
+后续捕获中，持续比较新文本的前 10 个单词：
 
-### Option 2: Run from Source (Recommended for Security)
-If you prefer to run the code directly, follow these steps in your bash/PowerShell/cmd:
+若 与当前前缀相同，说明字幕仍在更新同一段内容，则仅用最新文本覆盖缓存，不写入文件。
 
-1. **Clone this repo**:
-   ```bash
-   git clone https://github.com/LiveCaptionsHelper/SaveLiveCaptions.git
-   ```
-2. **Install dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-3. **Run the tool**:
-   ```bash
-   python src/main.py
-   ```
-   > **Good News, You can now edit the `src/function/config.py` to modify the quality of saving on your own.**
+若 前缀发生变化，意味着上一段内容已稳定结束，此时将 缓存中的完整文本 写入文件，并将新文本的前 10 个单词设为新的前缀，继续缓存。
 
-### Guidelines
-
----
-
-1. Before you open this application, make sure you already **open the live captions on Windows** (or it will exit automatically). Then double click the `SaveLiveCaptions.exe`. A small dashboard will appear in the top-left corner of your screen. You can drag the background to move this window.
-
-![Dashboard Preview](./assets/dashboard.png)  
-
-2. The **● (Circle)**  button is "start to save captions" and the **■ (Square)** button is "stop and exit the application". 
-
-3. **Start saving:** When you click the circle button, a file dialog will open to choose a save location. If you don't choose the direction, the default location is `~/Documents/captions`. 
-
-4. **Stop and exit:** When you click the square button, it stops and exit the application. You can find your captions file `YYYY-MM-DD_HH-MM-SS_captions.txt` in the chosen location like following.
-
-![Captions File Example](./assets/captionsFile.png)
+程序正常退出时，无论当前前缀状态如何，都将最后缓存的所有文本直接写入文件，确保不丢失剩余内容。
 
 ## License
 
